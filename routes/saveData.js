@@ -2,19 +2,29 @@ var express = require('express');
 const SaveData = require('../models/saveData');
 const User = require('../models/users');
 var router = express.Router();
-const { checkBody } = require("../modules/checkBody");
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
 
+
+
+
+
+
+// Configuration de Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 router.post('/', (req, res) => {
-    const { token, label, tempFridge, tempProd, cellule, delivry, controle, tempService, cleaning, oilTest } = req.body;
+    const { token, url, tempFridge, tempProd, cellule, delivry, controle, tempService, cleaning, oilTest } = req.body;
 
-    // Vérifiez que le token est fourni
     if (!token) {
         return res.json({ result: false, error: "Le token doit être fourni." });
     }
 
 
-    // Trouver l'utilisateur par son token
     User.findOne({ token }).then(user => {
         if (!user) {
             return res.json({ result: false, error: "Utilisateur non trouvé." });
@@ -31,8 +41,8 @@ router.post('/', (req, res) => {
             tempService,
             cleaning,
             oilTest,
-            user: user._id, // Lier les données à l'utilisateur
-            createdAt: new Date() // Utiliser la date actuelle
+            user: user._id, 
+            createdAt: new Date() 
         });
 
         // Sauvegarder dans la base de données
@@ -62,7 +72,6 @@ router.get('/saveData', (req, res) => {
             return res.json({ result: false, error: "Utilisateur non trouvé." });
         }
 
-        // Créez des objets Date pour la recherche, en prenant en compte le fuseau horaire
         const startDate = new Date(date + 'T00:00:00Z');
         const endDate = new Date(date + 'T23:59:59Z');
 
@@ -71,7 +80,7 @@ router.get('/saveData', (req, res) => {
         console.log("Date de fin:", endDate);
 
         SaveData.find({
-            user: user._id, // Assurez-vous que la clé user correspond à celle utilisée dans SaveData
+            user: user._id, 
             createdAt: { $gte: startDate, $lte: endDate }
         }).then(data => {
             if (data.length === 0) {
@@ -93,8 +102,289 @@ router.get('/saveData', (req, res) => {
 
 
 
+// Route pour upload des images st Ex elem (tracabilité) sur cloudinary 
+
+router.post('/upload-images', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Le token doit être fourni." });
+    }
+
+    // Recherche de l'utilisateur avec le token
+    const user = await User.findOne({ token });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé." });
+    }
+
+    // Vérification des fichiers
+    console.log('Fichiers reçus:', req.files); // Ajout du log pour vérifier les fichiers reçus
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: "Aucun fichier n'a été fourni." });
+    }
+
+    // Traitement des fichiers
+    const uploadPromises = Object.values(req.files).map((file) => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'St Ex Elem/traça' },
+          (error, result) => {
+            if (error) {
+              return reject(new Error(`Erreur lors de l'upload de ${file.name}: ${error.message}`));
+            }
+            resolve(result.secure_url); // Retourne l'URL sécurisé de l'image
+          }
+        );
+
+        // Vérifie si le fichier a un buffer
+        if (!file.data) {
+          return reject(new Error(`Le fichier ${file.name} est indéfini.`));
+        }
+
+        streamifier.createReadStream(file.data).pipe(uploadStream);
+      });
+    });
+
+    const imageUrls = await Promise.all(uploadPromises);
+
+    // Créer une nouvelle instance de SaveData avec les URLs des images et lier à l'utilisateur
+    const newSaveData = new SaveData({
+      label: { url: imageUrls, date: new Date() },
+      user: user._id,
+    });
+
+    // Sauvegarder dans la base de données
+    const savedData = await newSaveData.save();
+
+    // Retourner la réponse avec les données sauvegardées
+    return res.json({ result: true, data: savedData });
+
+  } catch (error) {
+    console.error('Erreur dans la route upload-images:', error);
+    return res.status(500).json({ error: "Erreur lors de l'upload des images", details: error.message });
+  }
+});
+
+module.exports = router;
+
+
+
+
+
+
+router.post('/upload-images/control', async (req, res) => {
+  try {
+    const token = req.body.token;
+
+    console.log("Body:", req.body);
+    console.log("Files:", req.files);
+
+    // Vérifiez la présence du token
+    if (!token) {
+      return res.status(400).json({ error: "Le token doit être fourni." });
+    }
+
+    // Recherche de l'utilisateur avec le token
+    const user = await User.findOne({ token });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé." });
+    }
+
+    const savedDataArray = [];
+    const photos = Array.isArray(req.files.photos) ? req.files.photos : [req.files.photos];
+
+
+    if (!photos || photos.length === 0) {
+      return res.status(400).json({ error: "Aucune photo n'a été fournie." });
+    }
+
+    // Traitez chaque image
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+
+      // Vérifiez que les données associées existent
+      const aspect = req.body[`aspect_${i}`];
+      const lot = req.body[`lot_${i}`];
+      const temperature = req.body[`temperature_${i}`];
+      const date = req.body[`date_${i}`];
+
+      if (!aspect || !lot || !temperature || !date) {
+        return res.status(400).json({ error: "Les données associées sont manquantes." });
+      }
+
+      // Upload de l'image vers Cloudinary
+      const photoUrl = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'St Ex Elem/control' },
+          (error, result) => {
+            if (result) {
+              resolve(result.secure_url);
+            } else {
+              reject(new Error(`Erreur lors de l'upload: ${error.message}`));
+            }
+          }
+        );
+        uploadStream.end(photo.buffer);
+      });
+
+      const newSaveData = new SaveData({
+        label: { url: photoUrl, date: new Date() },
+        controle: {
+            fournisseur: req.body.fournisseur,
+            etatCamion: req.body.etatCamion,
+            tempCamion: req.body.tempCamion,
+            aspect,
+            numeroLot: lot,
+            temperature,
+            dlc: date,
+        },
+        user: user._id,
+    });
+
+      // Sauvegarder dans la base de données
+      const savedData = await newSaveData.save();
+      savedDataArray.push(savedData);
+    }
+
+    console.log("Nouvelle donnée à sauvegarder :", newSaveData);
+
+    // Retourner la réponse avec toutes les données sauvegardées
+    return res.json({ result: true, data: savedDataArray });
+
+  } catch (error) {
+    console.error('Erreur dans la route upload-images:', error);
+    return res.status(500).json({ error: "Erreur lors de l'upload des images", details: error.message });
+  }
+});
+
+
+ 
 
   
+
+
+
+
+
+  
+  // Routes pour upload les données du relevé de température 
+
+  router.post('/upload-temp', async (req, res) => {
+    const { token, dataTemp } = req.body;
+  
+    // Vérification que le token et les données de température sont fournis
+    if (!token) {
+      return res.status(400).json({ result: false, error: "Le token doit être fourni." });
+    }
+  
+    if (!dataTemp) {
+      return res.status(400).json({ result: false, error: "Les données de température doivent être fournies." });
+    }
+  
+    try {
+      // Recherche de l'utilisateur avec le token
+      const user = await User.findOne({ token });
+      if (!user) {
+        return res.status(404).json({ result: false, error: "Utilisateur non trouvé." });
+      }
+  
+      // Créer un nouvel enregistrement dans SaveData
+      const newSaveData = new SaveData({
+        tempFridge: { dataTemp }, // On passe directement l'objet `dataTemp`
+        user: user._id,
+        createdAt: new Date(),
+      });
+  
+      // Sauvegarder dans la base de données
+      const savedData = await newSaveData.save();
+  
+      // Retourner la réponse avec les données sauvegardées
+      return res.status(201).json({ result: true, data: savedData });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ result: false, error: "Erreur lors de l'enregistrement des données." });
+    }
+  });
+
+  // Routes pour upload les données du controle de température
+  
+  router.post('/upload-controle', async (req, res) => {
+    const { token, resultControl } = req.body;
+  
+    // Vérification que le token et les données de température sont fournis
+    if (!token || !resultControl) {
+      return res.status(400).json({ result: false, error: "Le token doit être fourni ou les données de température." });
+    }
+  
+    try {
+      // Recherche de l'utilisateur avec le token
+      const user = await User.findOne({ token });
+      if (!user) {
+        return res.status(404).json({ result: false, error: "Utilisateur non trouvé." });
+      }
+  
+      // Créer un nouvel enregistrement dans SaveData
+      const newSaveData = new SaveData({
+        tempProd:  {
+        name: resultControl.name,
+        temperature: resultControl.temperature,
+        date : resultControl.date,
+        time: resultControl.time,
+        observation: resultControl.observation,
+      }, 
+        user: user._id,
+        createdAt: new Date(),
+      });
+  
+      // Sauvegarder dans la base de données
+      const savedData = await newSaveData.save();
+  
+      // Retourner la réponse avec les données sauvegardées
+      return res.status(201).json({ result: true, data: savedData });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ result: false, error: "Erreur lors de l'enregistrement des données." });
+    }
+  }
+  );
+  
+
+  // Routes pour upload les données de Livraison 
+
+  router.post('/upload-delivry', async (req, res) => {
+
+    const { token, dataDelivry } = req.body;
+
+    console.log(dataDelivry)
+
+    if (!token || !dataDelivry) {
+      return res.status(400).json({ result: false, error: "Le token doit être fourni ou les données de température." });
+    }
+  
+    try {
+      const user = await User.findOne({ token });
+      if (!user) {
+        return res.status(404).json({ result: false, error: "Utilisateur non trouvé." });
+      }
+  
+      const newSaveData = new SaveData({
+        delivry: {dataDelivry}, 
+        user: user._id,
+        createdAt: new Date(),
+      });
+
+      const savedData = await newSaveData.save();
+
+      console.log(savedData)
+  
+      return res.status(201).json({ result: true, data: savedData });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ result: false, error: "Erreur lors de l'enregistrement des données." });
+    }
+  }
+  );
 
   
 

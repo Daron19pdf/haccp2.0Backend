@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // sous document fridge
 const fridgeSchema = mongoose.Schema({
-    fridge: String,
+    fridge: [String],
 });
 
 // sous document livraison
@@ -15,7 +15,7 @@ const delivrySchema = mongoose.Schema({
 // sous document control 
 
 const controlSchema = mongoose.Schema({
-    fournisseurs: String,
+    fournisseurs: [String],
 });
 
 // sous document plan de netoyage

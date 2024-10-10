@@ -2,28 +2,33 @@ const mongoose = require('mongoose');
 
 // sous document Etiquette produit
 const labelSchema = mongoose.Schema({
-    label: String,
+    url: [String],
     date: String,
+    user:String,
 });
 
 // sous document Relevé de température
 
 const tempFridgeSchema = mongoose.Schema({
-    fridge: String,
-    periode: String,
-    temperature: String,
-    observation: String,
-    date: String,
+    dataTemp: [{
+        fridge: { type: String, required: true },  
+        period: { type: String, required: true },  
+        temperature: { type: String, required: true },  
+        observation: { type: String } ,
+        date: { type: String},
+      }],
+    user:String,
 });
 
 // sous document contrôle température 
 
 const tempProdSchema = mongoose.Schema({
-    name: String,
-    temperature: String,
-    observation: String,
-    date: String,
-    time: String,
+    name: { type: String, required: true },
+    temperature: { type: String, required: true },
+    observation: { type: String },
+    date: { type: String },
+    time: { type: String },
+    user: String,
 });
 
 // sous document cellule de refroidissement
@@ -36,33 +41,39 @@ const celluleSchema = mongoose.Schema({
     temperature: String,
     observation: String,
     date: String,
+    user:String,
 });
 
 // sous document livraison 
 
 const delivrySchema = mongoose.Schema({
-    status: String,
-    site: String,
-    conforme: Boolean,
-    critere: String,
-    name: String,
-    temperature: String,
-    observation: String,
-    date: String,
+    dataDelivry:[{
+    status: { type: String},
+    site: { type: String },
+    conforme: { type: String },
+    critere: { type: String},
+    name: { type: String},
+    temperature: { type: String },
+    observation: { type: String },
+    date: { type: String},
+    time: { type: String },
+    user: { type: String},
+}],
 });
 
 // sous document controle
 
 const controleSchema = mongoose.Schema({
     fournisseur: String,
+    label: String,
     etatCamion: String,
-    tempCamion: Boolean,
-    aspect: Boolean,
-    numeroLot: Boolean,
-    temperature: Boolean,
+    tempCamion: String,
+    aspect: String,
+    numeroLot: String,
+    temperature: String,
     dlc: String,
     date: String,
-
+    user:String,
 });
 
 // sous document contrôle température de service
@@ -81,7 +92,7 @@ const tempServiceSchema = mongoose.Schema({
     hotHoursEnd: String,
     observation: String,
     date: String,
-
+    user:String,
 });
 
 // sous document plan de netoyage
@@ -90,6 +101,7 @@ const cleaningSchema = mongoose.Schema({
     lieu: String,
     item: String,
     date: String,
+    user:String,
 });
 
 // sous document test huile
@@ -100,6 +112,7 @@ const oilTestSchema = mongoose.Schema({
     conforme: Boolean,
     action: String,
     date: String,
+    user:String,
 });
 
 const saveDataSchema = mongoose.Schema({

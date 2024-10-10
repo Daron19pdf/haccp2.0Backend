@@ -5,7 +5,7 @@ const userSchema = mongoose.Schema({
   password: String,
   token: String,
   equipement : {type: mongoose.Schema.Types.ObjectId, ref: 'Equipement'},
-  saveData: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SaveData' }]
+  saveData: { type: mongoose.Schema.Types.ObjectId, ref: 'SaveData' },
 });
 
 const User = mongoose.model('users', userSchema);

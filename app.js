@@ -10,8 +10,18 @@ var usersRouter = require('./routes/users');
 var equipementRouter = require('./routes/equipement');
 var saveDataRouter = require('./routes/saveData');
 
+const fileUpload = require('express-fileupload');
+const bodyParser = require('body-parser');
+
 var app = express();
 
+// Middleware pour analyser les données JSON
+app.use(bodyParser.json());
+// Middleware pour analyser les données de type multipart/form-data
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.use(fileUpload());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
