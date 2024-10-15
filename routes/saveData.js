@@ -5,11 +5,6 @@ var router = express.Router();
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 
-
-
-
-
-
 // Configuration de Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -105,6 +100,9 @@ router.get('/saveData', (req, res) => {
 // Route pour upload des images st Ex elem (tracabilité) sur cloudinary 
 
 router.post('/upload-images', async (req, res) => {
+
+  console.log('Requête reçue:', req.files);
+  
   try {
     const { token } = req.body;
 
@@ -172,91 +170,89 @@ module.exports = router;
 
 
 
-
 router.post('/upload-images/control', async (req, res) => {
-  try {
-    const token = req.body.token;
 
-    console.log("Body:", req.body);
-    console.log("Files:", req.files);
+    console.log('Requête reçue:', req.files);
+    
+    try {
+        const token = req.body.token;
 
-    // Vérifiez la présence du token
-    if (!token) {
-      return res.status(400).json({ error: "Le token doit être fourni." });
-    }
+        // Vérifiez la présence du token
+        if (!token) {
+            return res.status(400).json({ error: "Le token doit être fourni." });
+        }
 
-    // Recherche de l'utilisateur avec le token
-    const user = await User.findOne({ token });
-    if (!user) {
-      return res.status(404).json({ error: "Utilisateur non trouvé." });
-    }
+        // Recherche de l'utilisateur avec le token
+        const user = await User.findOne({ token });
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé." });
+        }
 
-    const savedDataArray = [];
-    const photos = Array.isArray(req.files.photos) ? req.files.photos : [req.files.photos];
+        // Vérifie si des fichiers ont été envoyés
+        if (!req.files || !req.files.photos || req.files.photos.length === 0) {
+            return res.status(400).json({ error: "Aucune photo n'a été fournie." });
+        }
 
+        const photos = Array.isArray(req.files.photos) ? req.files.photos : [req.files.photos];
+        const savedDataArray = [];
 
-    if (!photos || photos.length === 0) {
-      return res.status(400).json({ error: "Aucune photo n'a été fournie." });
-    }
+        // Itération sur chaque photo pour traitement
+        for (let i = 0; i < photos.length; i++) {
+            const photo = photos[i];
 
-    // Traitez chaque image
-    for (let i = 0; i < photos.length; i++) {
-      const photo = photos[i];
+            // Vérification des données associées
+            const aspect = req.body[`aspect_${i}`];
+            const lot = req.body[`lot_${i}`];
+            const temperature = req.body[`temperature_${i}`];
+            const date = req.body[`date_${i}`];
 
-      // Vérifiez que les données associées existent
-      const aspect = req.body[`aspect_${i}`];
-      const lot = req.body[`lot_${i}`];
-      const temperature = req.body[`temperature_${i}`];
-      const date = req.body[`date_${i}`];
-
-      if (!aspect || !lot || !temperature || !date) {
-        return res.status(400).json({ error: "Les données associées sont manquantes." });
-      }
-
-      // Upload de l'image vers Cloudinary
-      const photoUrl = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'St Ex Elem/control' },
-          (error, result) => {
-            if (result) {
-              resolve(result.secure_url);
-            } else {
-              reject(new Error(`Erreur lors de l'upload: ${error.message}`));
+            if (!aspect || !lot || !temperature || !date) {
+                return res.status(400).json({ error: "Les données associées sont manquantes." });
             }
-          }
-        );
-        uploadStream.end(photo.buffer);
-      });
 
-      const newSaveData = new SaveData({
-        label: { url: photoUrl, date: new Date() },
-        controle: {
-            fournisseur: req.body.fournisseur,
-            etatCamion: req.body.etatCamion,
-            tempCamion: req.body.tempCamion,
-            aspect,
-            numeroLot: lot,
-            temperature,
-            dlc: date,
-        },
-        user: user._id,
-    });
+            // Upload de l'image vers Cloudinary
+            const photoUrl = await new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    { folder: 'St Ex Elem/traça' },
+                    (error, result) => {
+                        if (error) {
+                            return reject(new Error(`Erreur lors de l'upload de ${photo.name}: ${error.message}`));
+                        }
+                        resolve(result.secure_url); // Retourne l'URL sécurisé de l'image
+                    }
+                );
+                streamifier.createReadStream(photo.data).pipe(uploadStream); // Utilise le buffer de la photo
+            });
 
-      // Sauvegarder dans la base de données
-      const savedData = await newSaveData.save();
-      savedDataArray.push(savedData);
+            // Créer une nouvelle instance de SaveData
+            const newSaveData = new SaveData({
+                label: { url: photoUrl, date: new Date() },
+                controle: {
+                    fournisseur: req.body.fournisseur,
+                    etatCamion: req.body.etatCamion,
+                    tempCamion: req.body.tempCamion,
+                    aspect,
+                    numeroLot: lot,
+                    temperature,
+                    dlc: date,
+                },
+                user: user._id,
+            });
+
+            // Sauvegarder dans la base de données
+            const savedData = await newSaveData.save();
+            savedDataArray.push(savedData);
+        }
+
+        // Retourner la réponse avec toutes les données sauvegardées
+        return res.json({ result: true, data: savedDataArray });
+
+    } catch (error) {
+        console.error('Erreur dans la route upload-images:', error);
+        return res.status(500).json({ error: "Erreur lors de l'upload des images", details: error.message });
     }
-
-    console.log("Nouvelle donnée à sauvegarder :", newSaveData);
-
-    // Retourner la réponse avec toutes les données sauvegardées
-    return res.json({ result: true, data: savedDataArray });
-
-  } catch (error) {
-    console.error('Erreur dans la route upload-images:', error);
-    return res.status(500).json({ error: "Erreur lors de l'upload des images", details: error.message });
-  }
 });
+
 
 
  
