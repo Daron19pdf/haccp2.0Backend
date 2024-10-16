@@ -169,10 +169,10 @@ module.exports = router;
 
 
 
-
+// Route pour upload des images st Ex elem (Controle marchandise) sur cloudinary
 router.post('/upload-images/control', async (req, res) => {
 
-    console.log('Requête reçue:', req.files);
+    console.log('Requête reçue:', req.body);
     
     try {
         const token = req.body.token;
