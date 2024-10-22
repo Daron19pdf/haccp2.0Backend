@@ -381,6 +381,51 @@ router.post('/upload-images/control', async (req, res) => {
     }
   }
   );
+  
+  // Routes pour upload les données controle de temperature 
+
+  router.post('/upload-service', async (req, res) => {
+    console.log(req.body)
+    const { token, resultControl } = req.body;
+  
+    if (!token || !resultControl) {
+      return res.status(400).json({ result: false, error: "Le token ou les données de contrôle doivent être fournis." });
+    }
+  
+    
+    try {
+      const user = await User.findOne({ token });
+      if (!user) {
+        return res.status(404).json({ result: false, error: "Utilisateur non trouvé." });
+      }
+  
+      // Créer un nouvel enregistrement dans SaveData avec les données envoyées
+      const newSaveData = new SaveData({
+        tempService:  {
+          lieu: resultControl.lieu,  // Utilisez resultControl pour accéder aux propriétés envoyées
+          date: resultControl.date,
+          nameCold: resultControl.nameCold,
+          selectedPeriodCold: resultControl.selectedPeriodCold,
+          tempCold: resultControl.tempCold,   
+          timeCold: resultControl.timeCold,
+          nameHot: resultControl.nameHot,
+          selectedPeriodHot: resultControl.selectedPeriodHot,
+          tempHot: resultControl.tempHot,
+          timeHot: resultControl.timeHot,
+          observation: resultControl.observation
+        }, 
+        user: user._id,
+        createdAt: new Date(),
+      });
+  
+      const savedData = await newSaveData.save();
+  
+      return res.status(201).json({ result: true, data: savedData });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ result: false, error: "Erreur lors de l'enregistrement des données." });
+    }
+});
 
   
 

@@ -21,8 +21,10 @@ const controlSchema = mongoose.Schema({
 // sous document plan de netoyage
 
 const cleaningPlanSchema = mongoose.Schema({
-    cuisine: String,
-    refectoire: String,
+    cleaning:[{
+        cuisineZoneFroide: [String],
+        refectoire: [String],
+    }],
 });
 
 // sous document test huile 

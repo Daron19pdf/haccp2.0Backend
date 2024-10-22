@@ -80,19 +80,18 @@ const controleSchema = mongoose.Schema({
 
 const tempServiceSchema = mongoose.Schema({
     lieu: String,
-    coldName: String,
-    coldTempBegin: String,
-    coldHoursBegin: String,
-    coldTempEnd: String,
-    coldHoursEnd: String,
-    hotName: String,
-    hotTempBegin: String,
-    hotHoursBegin: String,
-    hotTempEnd: String,
-    hotHoursEnd: String,
-    observation: String,
     date: String,
+    nameCold: String,
+    selectedPeriodCold: String,
+    tempCold: String,   
+    timeCold: String,
+    nameHot: String,
+    selectedPeriodHot: String,
+    tempHot: String,
+    timeHot: String,
+    observation: { type: String, required: false },
     user:String,
+    
 });
 
 // sous document plan de netoyage
