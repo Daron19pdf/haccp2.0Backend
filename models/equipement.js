@@ -22,7 +22,12 @@ const controlSchema = mongoose.Schema({
 
 const cleaningPlanSchema = mongoose.Schema({
     cleaning:[{
-        cuisineZoneFroide: [String],
+        cuisineZoneFroide1: [String],
+        cuisineZoneFroide2: [String],
+        cuisineZoneChaud: [String],
+        plonge: [String],
+        reserve: [String],
+        vestiaire: [String],
         refectoire: [String],
     }],
 });
