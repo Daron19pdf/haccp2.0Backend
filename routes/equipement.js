@@ -57,6 +57,8 @@ router.put("/update", (req, res) => {
     return res.status(400).json({ result: false, error: "Le token doit être fourni" });
   }
 
+  console.log(req.body);
+
   // Trouver l'utilisateur avec le token
   User.findOne({ token: req.body.token })
     .then((user) => {

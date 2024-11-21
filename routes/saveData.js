@@ -152,6 +152,7 @@ router.post('/upload-images', async (req, res) => {
       user: user._id,
     });
 
+     
     // Sauvegarder dans la base de données
     const savedData = await newSaveData.save();
 
@@ -427,6 +428,77 @@ router.post('/upload-images/control', async (req, res) => {
     }
 });
 
+
+// route pour upload les données de netoyage
+
+router.post('/upload-cleaning', async (req, res) => {
+    const { token, dataCleaning } = req.body;
+    console.log(dataCleaning);
+    
+  
+    if (!token || !dataCleaning) {
+      return res.status(400).json({ result: false, error: "Le token ou les données de nettoyage doivent être fournis." });
+    }
+  
+    try {
+      const user = await User.findOne({ token });
+      if (!user) {
+        return res.status(404).json({ result: false, error: "Utilisateur non trouvé." });
+      }
+  
+      const newSaveData = new SaveData({
+        cleaning: dataCleaning, 
+        user: user._id,
+        createdAt: new Date(),
+      });
+  
+      const savedData = await newSaveData.save();
+  
+      return res.status(201).json({ result: true, data: savedData });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ result: false, error: "Erreur lors de l'enregistrement des données." });
+    }
+  }
+  );
+
+
+  // Routes pour upload les données de test huile
+
+  router.post('/upload-oil', async (req, res) => {
+    const { token, name, result, conforme, action } = req.body;
+  
+    if (!token || !name || !result || !conforme || !action) {
+      return res.status(400).json({ result: false, error: "Le token ou les données de test d'huile doivent être fournis." });
+    }
+  
+    try {
+      const user = await User.findOne({ token });
+      if (!user) {
+        return res.status(404).json({ result: false, error: "Utilisateur non trouvé." });
+      }
+  
+      const newSaveData = new SaveData({
+        oilTest: {
+          name,
+          result,
+          conforme,
+          action,
+          date: new Date()
+        },
+        user: user._id,
+        createdAt: new Date(),
+      });
+  
+      const savedData = await newSaveData.save();
+  
+      return res.status(201).json({ result: true, data: savedData });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ result: false, error: "Erreur lors de l'enregistrement des données." });
+    }
+  }
+  );
   
 
 module.exports = router;

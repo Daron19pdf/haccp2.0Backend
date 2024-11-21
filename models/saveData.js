@@ -97,18 +97,24 @@ const tempServiceSchema = mongoose.Schema({
 // sous document plan de netoyage
 
 const cleaningSchema = mongoose.Schema({
-    lieu: String,
-    item: String,
-    date: String,
-    user:String,
+    cuisineZoneFroide1: { type: [String], default: [] },
+    refectoire: { type: [String], default: [] },
+    cuisineZoneFroide2: { type: [String], default: [] },
+    plonge: { type: [String], default: [] },
+    reserve: { type: [String], default: [] },
+    vestiaire: { type: [String], default: [] },
+    cuisineZoneChaud: { type: [String], default: [] },
+    date: { type: String, required: false }, // Ajout de la date pour la traçabilité
+    user: { type: String, required: false }, // Ajout de l'utilisateur
 });
+
 
 // sous document test huile
 
 const oilTestSchema = mongoose.Schema({
     name: String,
-    test: String,
-    conforme: Boolean,
+    result: String,
+    conforme: String,
     action: String,
     date: String,
     user:String,
