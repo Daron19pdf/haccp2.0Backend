@@ -56,42 +56,72 @@ router.post('/', (req, res) => {
 });
 
 router.get('/saveData', (req, res) => {
-    const { token, date } = req.query;
+  const { token, date, startDate, endDate } = req.query;
 
-    if (!token || !date) {
-        return res.json({ result: false, error: "Le token et la date doivent être fournis." });
-    }
+  // Vérifie la présence du token et de la date ou des deux dates
+  if (!token || (!date && (!startDate || !endDate))) {
+      return res.json({ result: false, error: "Le token et la date (ou la période de dates) doivent être fournis." });
+  }
 
-    User.findOne({ token }).then(user => {
-        if (!user) {
-            return res.json({ result: false, error: "Utilisateur non trouvé." });
-        }
+  User.findOne({ token }).then(user => {
+      if (!user) {
+          return res.json({ result: false, error: "Utilisateur non trouvé." });
+      }
 
-        const startDate = new Date(date + 'T00:00:00Z');
-        const endDate = new Date(date + 'T23:59:59Z');
+      // Si une seule date est fournie (date unique)
+      if (date && !startDate && !endDate) {
+          const startDate = new Date(date + 'T00:00:00Z');
+          const endDate = new Date(date + 'T23:59:59Z');
 
-        console.log("Recherche pour l'utilisateur:", user._id);
-        console.log("Date de début:", startDate);
-        console.log("Date de fin:", endDate);
+          console.log("Recherche pour l'utilisateur:", user._id);
+          console.log("Date de début:", startDate);
+          console.log("Date de fin:", endDate);
 
-        SaveData.find({
-            user: user._id, 
-            createdAt: { $gte: startDate, $lte: endDate }
-        }).then(data => {
-            if (data.length === 0) {
-                return res.json({ result: false, message: "Aucune donnée trouvée pour cette date." });
-            }
+          // Recherche des données pour une journée spécifique
+          SaveData.find({
+              user: user._id,
+              createdAt: { $gte: startDate, $lte: endDate }
+          }).then(data => {
+              if (data.length === 0) {
+                  return res.json({ result: false, message: "Aucune donnée trouvée pour cette date." });
+              }
 
-            res.json({ result: true, data: data });
-        }).catch(err => {
-            console.error(err);
-            res.json({ result: false, error: "Erreur lors de la récupération des données." });
-        });
-    }).catch(err => {
-        console.error(err);
-        res.json({ result: false, error: "Erreur lors de la recherche de l'utilisateur." });
-    });
+              res.json({ result: true, data: data });
+          }).catch(err => {
+              console.error(err);
+              res.json({ result: false, error: "Erreur lors de la récupération des données." });
+          });
+      }
+      // Si une période (startDate et endDate) est fournie
+      else if (startDate && endDate) {
+          const start = new Date(startDate + 'T00:00:00Z');
+          const end = new Date(endDate + 'T23:59:59Z');
+
+          console.log("Recherche pour l'utilisateur:", user._id);
+          console.log("Date de début:", start);
+          console.log("Date de fin:", end);
+
+          // Recherche des données dans la période spécifiée
+          SaveData.find({
+              user: user._id,
+              createdAt: { $gte: start, $lte: end }
+          }).then(data => {
+              if (data.length === 0) {
+                  return res.json({ result: false, message: "Aucune donnée trouvée pour cette période." });
+              }
+
+              res.json({ result: true, data: data });
+          }).catch(err => {
+              console.error(err);
+              res.json({ result: false, error: "Erreur lors de la récupération des données." });
+          });
+      }
+  }).catch(err => {
+      console.error(err);
+      res.json({ result: false, error: "Erreur lors de la recherche de l'utilisateur." });
+  });
 });
+
 
 
 
