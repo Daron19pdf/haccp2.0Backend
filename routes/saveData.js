@@ -73,9 +73,6 @@ router.get('/saveData', (req, res) => {
           const startDate = new Date(date + 'T00:00:00Z');
           const endDate = new Date(date + 'T23:59:59Z');
 
-          console.log("Recherche pour l'utilisateur:", user._id);
-          console.log("Date de début:", startDate);
-          console.log("Date de fin:", endDate);
 
           // Recherche des données pour une journée spécifique
           SaveData.find({
@@ -97,9 +94,7 @@ router.get('/saveData', (req, res) => {
           const start = new Date(startDate + 'T00:00:00Z');
           const end = new Date(endDate + 'T23:59:59Z');
 
-          console.log("Recherche pour l'utilisateur:", user._id);
-          console.log("Date de début:", start);
-          console.log("Date de fin:", end);
+         
 
           // Recherche des données dans la période spécifiée
           SaveData.find({
@@ -131,7 +126,7 @@ router.get('/saveData', (req, res) => {
 
 router.post('/upload-images', async (req, res) => {
 
-  console.log('Requête reçue:', req.files);
+  
   
   try {
     const { token } = req.body;
@@ -147,7 +142,7 @@ router.post('/upload-images', async (req, res) => {
     }
 
     // Vérification des fichiers
-    console.log('Fichiers reçus:', req.files); // Ajout du log pour vérifier les fichiers reçus
+    
     if (!req.files || Object.keys(req.files).length === 0) {
       return res.status(400).json({ error: "Aucun fichier n'a été fourni." });
     }
@@ -203,7 +198,7 @@ module.exports = router;
 // Route pour upload des images st Ex elem (Controle marchandise) sur cloudinary
 router.post('/upload-images/control', async (req, res) => {
 
-    console.log('Requête reçue:', req.body);
+    
     
     try {
         const token = req.body.token;
@@ -257,15 +252,17 @@ router.post('/upload-images/control', async (req, res) => {
 
             // Créer une nouvelle instance de SaveData
             const newSaveData = new SaveData({
-                label: { url: photoUrl, date: new Date() },
+                
                 controle: {
                     fournisseur: req.body.fournisseur,
+                    label: photoUrl,
                     etatCamion: req.body.etatCamion,
                     tempCamion: req.body.tempCamion,
                     aspect,
                     numeroLot: lot,
                     temperature,
                     dlc: date,
+                    date: new Date() 
                 },
                 user: user._id,
             });
@@ -383,7 +380,6 @@ router.post('/upload-images/control', async (req, res) => {
 
     const { token, dataDelivry } = req.body;
 
-    console.log(dataDelivry)
 
     if (!token || !dataDelivry) {
       return res.status(400).json({ result: false, error: "Le token doit être fourni ou les données de température." });
@@ -403,7 +399,7 @@ router.post('/upload-images/control', async (req, res) => {
 
       const savedData = await newSaveData.save();
 
-      console.log(savedData)
+     
   
       return res.status(201).json({ result: true, data: savedData });
     } catch (err) {
@@ -416,7 +412,7 @@ router.post('/upload-images/control', async (req, res) => {
   // Routes pour upload les données controle de temperature 
 
   router.post('/upload-service', async (req, res) => {
-    console.log(req.body)
+    
     const { token, resultControl } = req.body;
   
     if (!token || !resultControl) {
@@ -463,7 +459,7 @@ router.post('/upload-images/control', async (req, res) => {
 
 router.post('/upload-cleaning', async (req, res) => {
     const { token, dataCleaning } = req.body;
-    console.log(dataCleaning);
+  
     
   
     if (!token || !dataCleaning) {
