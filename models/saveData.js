@@ -104,8 +104,8 @@ const cleaningSchema = mongoose.Schema({
     reserve: { type: [String], default: [] },
     vestiaire: { type: [String], default: [] },
     cuisineZoneChaud: { type: [String], default: [] },
-    date: { type: String, required: false }, // Ajout de la date pour la traçabilité
-    user: { type: String, required: false }, // Ajout de l'utilisateur
+    date: { type: String, required: false }, 
+    user: { type: String, required: false }, 
 });
 
 
