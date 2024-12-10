@@ -1,9 +1,5 @@
-
-
-
 import { connect } from 'mongoose';
 
-require("dotenv").config();
 
 const CONNECTION_STRING = process.env.CONNECTION_STRING;
 
