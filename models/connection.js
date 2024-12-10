@@ -1,7 +1,12 @@
-const mongoose = require('mongoose');
+
+
+
+import { connect } from 'mongoose';
+
+require("dotenv").config();
 
 const CONNECTION_STRING = process.env.CONNECTION_STRING;
 
-mongoose.connect(CONNECTION_STRING, { connectTimeoutMS: 2000 })
+connect(CONNECTION_STRING, { connectTimeoutMS: 2000 })
   .then(() => console.log('Database connected'))
   .catch(error => console.error(error));
