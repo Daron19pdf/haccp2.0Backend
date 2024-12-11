@@ -15,6 +15,7 @@ const tempFridgeSchema = mongoose.Schema({
         period: { type: String, required: true },  
         temperature: { type: String, required: true },  
         observation: { type: String } ,
+        validation: { type: String },
         date: { type: String},
       }],
     user:String,
