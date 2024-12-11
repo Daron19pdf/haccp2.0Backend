@@ -105,6 +105,7 @@ const cleaningSchema = mongoose.Schema({
     reserve: { type: [String], default: [] },
     vestiaire: { type: [String], default: [] },
     cuisineZoneChaud: { type: [String], default: [] },
+    validation: { type: String, required: false },
     date: { type: String, required: false }, 
     user: { type: String, required: false }, 
 });

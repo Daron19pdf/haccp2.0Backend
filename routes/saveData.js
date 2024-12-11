@@ -480,6 +480,7 @@ router.post('/upload-cleaning', async (req, res) => {
   
       const newSaveData = new SaveData({
         cleaning: dataCleaning, 
+        validation: dataCleaning.validation,
         user: user._id,
         createdAt: new Date(),
       });
