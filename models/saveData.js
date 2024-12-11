@@ -28,6 +28,7 @@ const tempProdSchema = mongoose.Schema({
     observation: { type: String },
     date: { type: String },
     time: { type: String },
+    validation: { type: String },
     user: String,
 });
 

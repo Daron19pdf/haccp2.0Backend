@@ -331,6 +331,10 @@ router.post('/upload-images/control', async (req, res) => {
     }
   });
 
+
+
+
+
   // Routes pour upload les données du controle de température
   
   router.post('/upload-controle', async (req, res) => {
@@ -356,6 +360,7 @@ router.post('/upload-images/control', async (req, res) => {
         date : resultControl.date,
         time: resultControl.time,
         observation: resultControl.observation,
+        validation: resultControl.validation
       }, 
         user: user._id,
         createdAt: new Date(),
