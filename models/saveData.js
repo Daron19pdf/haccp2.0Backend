@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 // sous document Etiquette produit
 const labelSchema = mongoose.Schema({
     url: [String],
-    validation: String,
     date: String,
     user:String,
 });
@@ -29,7 +28,6 @@ const tempProdSchema = mongoose.Schema({
     observation: { type: String },
     date: { type: String },
     time: { type: String },
-    validation: { type: String },
     user: String,
 });
 
@@ -76,6 +74,7 @@ const controleSchema = mongoose.Schema({
     dlc: String,
     date: String,
     user:String,
+    validation:String,
 });
 
 // sous document contrôle température de service

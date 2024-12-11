@@ -125,7 +125,7 @@ router.get('/saveData', (req, res) => {
 // Route pour upload des images st Ex elem (tracabilité) sur cloudinary 
 
 router.post('/upload-images', async (req, res) => {
- console.log(req.body);
+ 
  
   
   
@@ -174,7 +174,7 @@ router.post('/upload-images', async (req, res) => {
 
     // Créer une nouvelle instance de SaveData avec les URLs des images et lier à l'utilisateur
     const newSaveData = new SaveData({
-      label: { url: imageUrls, date: new Date(), validation:req.body.validation },
+      label: { url: imageUrls, date: new Date() },
       user: user._id,
     });
 
@@ -263,7 +263,8 @@ router.post('/upload-images/control', async (req, res) => {
                     numeroLot: lot,
                     temperature,
                     dlc: date,
-                    date: new Date() 
+                    date: new Date(),
+                    validation: req.body.validation,
                 },
                 user: user._id,
             });
@@ -361,7 +362,6 @@ router.post('/upload-images/control', async (req, res) => {
         date : resultControl.date,
         time: resultControl.time,
         observation: resultControl.observation,
-        validation: resultControl.validation
       }, 
         user: user._id,
         createdAt: new Date(),
