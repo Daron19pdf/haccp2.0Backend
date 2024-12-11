@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 // sous document Etiquette produit
 const labelSchema = mongoose.Schema({
     url: [String],
+    validation: String,
     date: String,
     user:String,
 });
