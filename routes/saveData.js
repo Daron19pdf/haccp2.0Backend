@@ -362,6 +362,7 @@ router.post('/upload-images/control', async (req, res) => {
         date : resultControl.date,
         time: resultControl.time,
         observation: resultControl.observation,
+        validation: resultControl.validation,
       }, 
         user: user._id,
         createdAt: new Date(),

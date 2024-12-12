@@ -27,6 +27,7 @@ const tempProdSchema = mongoose.Schema({
     name: { type: String, required: true },
     temperature: { type: String, required: true },
     observation: { type: String },
+    validation: { type: String },
     date: { type: String },
     time: { type: String },
     user: String,
@@ -56,9 +57,9 @@ const delivrySchema = mongoose.Schema({
         name: { type: String},
         temperature: { type: String },
         observation: { type: String },
-        validation: { type: String },
         date: { type: String},
         time: { type: String },
+        validation: { type: String },
         user: { type: String},
 }],
 });
